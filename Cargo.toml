@@ -9,9 +9,5 @@ rustc-serialize = "0.3"
 walkdir = "0.1"
 ansi_term = "0.7"
 
-[lib]
-name = "leo"
-path = "src/leo/lib.rs"
-
 [[bin]]
 name = "leo"

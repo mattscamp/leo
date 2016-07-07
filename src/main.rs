@@ -1,17 +1,17 @@
 extern crate rustc_serialize;
 extern crate docopt;
-extern crate leo;
+extern crate walkdir;
+extern crate ansi_term;
+
+mod leo;
 
 use docopt::Docopt;
-use leo::{
-    Leo
-};
 
 const USAGE: &'static str = "
 Leo
 
 Usage:
-  leo [<query> [<path>] [options]
+  leo [<query>] [<path>] [options]
   leo --version
 
 Options:
@@ -24,7 +24,7 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 struct Args {
     arg_query: Option<String>,
     arg_path: Option<String>,
-    flag_version: bool,
+    flag_version: bool
 }
 
 fn main() {
@@ -36,6 +36,5 @@ fn main() {
     	return print!("Leo version: {}", VERSION);
     }
 
-    let mut leo = Leo::new(args.arg_query, args.arg_path);
-    leo.search();
+    leo::execute(args.arg_query, args.arg_path);
 }
