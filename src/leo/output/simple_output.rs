@@ -4,6 +4,7 @@ use std::path::Path;
 
 use super::Output;
 
+#[derive(Clone)]
 pub struct SimpleOutput {}
 
 impl SimpleOutput {

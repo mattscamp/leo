@@ -2,6 +2,7 @@ extern crate rustc_serialize;
 extern crate docopt;
 extern crate walkdir;
 extern crate ansi_term;
+extern crate spmc;
 
 mod leo;
 
