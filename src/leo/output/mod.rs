@@ -12,7 +12,9 @@ trait OutputClone {
     fn clone_box(&self) -> Box<Output + Send>;
 }
 
-impl<T> OutputClone for T where T: 'static + Output + Send + Clone {
+impl<T> OutputClone for T
+    where T: 'static + Output + Send + Clone
+{
     fn clone_box(&self) -> Box<Output + Send> {
         Box::new(self.clone())
     }

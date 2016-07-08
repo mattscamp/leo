@@ -18,7 +18,7 @@ fn get_output_strategy(strategy: &str) -> Box<Output + Send> {
     }
 }
 
-pub fn execute(query: Option<String>, path: Option<String>, opts: Vec<Option<String>) {
+pub fn execute(query: Option<String>, path: Option<String>) {
     let query = query.expect("No query provided.");
 	let path = path.expect("No path provided.");
 	let search_strategy = get_search_strategy("parallel");

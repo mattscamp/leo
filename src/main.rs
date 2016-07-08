@@ -25,16 +25,16 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 struct Args {
     arg_query: Option<String>,
     arg_path: Option<String>,
-    flag_version: bool
+    flag_version: bool,
 }
 
 fn main() {
-	let args: Args = Docopt::new(USAGE)
-                            .and_then(|d| d.decode())
-                            .unwrap_or_else(|e| e.exit());
-    
+    let args: Args = Docopt::new(USAGE)
+        .and_then(|d| d.decode())
+        .unwrap_or_else(|e| e.exit());
+
     if (args.flag_version) {
-    	return print!("Leo version: {}", VERSION);
+        return print!("Leo version: {}", VERSION);
     }
 
     leo::execute(args.arg_query, args.arg_path);
