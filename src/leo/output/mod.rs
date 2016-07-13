@@ -5,7 +5,7 @@ use std::path::Path;
 pub use self::simple_output::SimpleOutput;
 
 pub trait Output: OutputClone {
-    fn result(&self, path: &Path, line_n: usize, line_c: String);
+    fn result(&self, path: &Path, line_n: usize, line_c: &str);
 }
 
 trait OutputClone {

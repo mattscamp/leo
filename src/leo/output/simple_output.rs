@@ -14,7 +14,7 @@ impl SimpleOutput {
 }
 
 impl Output for SimpleOutput {
-    fn result(&self, path: &Path, line_n: usize, line_c: String) {
+    fn result(&self, path: &Path, line_n: usize, line_c: &str) {
         let path = path.to_str().expect("No path passed.");
         let line_n = line_n.to_string();
         let line_c = line_c.trim();

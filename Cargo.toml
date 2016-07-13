@@ -4,11 +4,11 @@ version = "0.1.0"
 authors = ["MC mattscamp@gmail.com"]
 
 [dependencies]
-docopt = "0.6"
 rustc-serialize = "0.3"
 walkdir = "0.1"
 ansi_term = "0.7"
 spmc = "0.2.1"
+getopts = "0.2.0"
 
 [[bin]]
 name = "leo"

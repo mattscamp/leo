@@ -6,6 +6,7 @@ use std::io::BufReader;
 use std::fs::File;
 use std::path::Path;
 use std::ffi::OsStr;
+use std::str;
 
 use leo::output::Output;
 use leo::filter::Filter;
@@ -19,17 +20,17 @@ fn li<T>((n, x): (usize, T)) -> (usize, T) {
 
 fn process_entry<F: Filter>(e: &F, p: &Path, q: &String, o: &Box<Output + Send>) {
     if e.passes_filters() {
-        let mut f = File::open(p);
-        let mut reader = BufReader::new(f.unwrap());
+        let mut f = File::open(p).unwrap();;
+        let len = f.metadata().unwrap().len();
+        let mut buffer = String::with_capacity(len as usize);
 
-        for (line_n, line) in reader.lines().enumerate().map(li) {
-            match line {
-                Ok(x) => {
-                    if (x.contains(q)) {
-                        o.result(p, line_n, x);
-                    }
+        f.read_to_string(&mut buffer);
+        // We dont want to loop through the file if there is nothing to find
+        if buffer.contains(q) {
+            for (line_n, line) in buffer.lines().enumerate().map(li) {
+                if line.contains(q) {
+                    o.result(p, line_n, line);
                 }
-                Err(x) => continue,
             }
         }
     }
