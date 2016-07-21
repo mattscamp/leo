@@ -2,43 +2,74 @@ mod search;
 mod output;
 mod filter;
 
-use self::search::{Search, SimpleSearch, ParallelSearch};
-use self::output::{Output, SimpleOutput};
+use self::search::Search;
+use self::output::Output;
+
+use std::thread;
+use std::path::PathBuf;
+use regex::Regex;
+
+use matcha::Match;
+
+const DEFAULT_MAX_THREAD: u32 = 2;
 
 pub struct Leo {
-  pub query: Option<String>,
-  pub path: Option<String>,
-  pub search_strategy: String
+    pub query: Option<String>,
+    pub path: Option<String>,
+    pub output_strategy: Option<String>,
+    pub max_threads: u32,
+    pub options: Filters,
+}
+
+pub struct Filters {
+    recursive: bool,
+    regex: bool,
+    case_sensitive: bool,
+    follow_symlink: bool,
+    hidden_files: bool,
+    binary_files: bool,
+    ignore_files: bool,
+}
+
+#[derive(Debug)]
+pub struct Matches<'a> {
+    path: PathBuf,
+    results: Vec<Match>,
+    buffer: &'a [u8],
 }
 
 impl Leo {
     pub fn new() -> Leo {
         Leo {
-          query: None,
-          path: None,
-          search_strategy: "parallel".to_string(),
+            query: None,
+            path: None,
+            output_strategy: None,
+            max_threads: DEFAULT_MAX_THREAD,
+            options: Filters {
+                recursive: true,
+                regex: false,
+                case_sensitive: false,
+                follow_symlink: false,
+                hidden_files: false,
+                binary_files: false,
+                ignore_files: false,
+            },
         }
     }
 }
 
-fn get_search_strategy(strategy: String) -> Box<Search> {
-    match strategy.as_str() {
-        "basic" => Box::new(SimpleSearch::new()) as Box<Search>,
-        _ => Box::new(ParallelSearch::new()) as Box<Search>
-    }
-}
-
-fn get_output_strategy(strategy: &str) -> Box<Output + Send> {
-    match strategy {
-        _ => Box::new(SimpleOutput::new()) as Box<Output + Send>
-    }
-}
-
 pub fn execute(leo: Leo) {
-  let query = leo.query.expect("No query provided.");
-	let path = leo.path.expect("No path provided.");
-	let search_strategy = get_search_strategy(leo.search_strategy);
-	let output_strategy = get_output_strategy("");
+    let query = match leo.query {
+        Some(q) => q,
+        None => panic!("No query"),
+    };
 
-  search_strategy.find(output_strategy, query, path);
+    let path = match leo.path {
+        Some(p) => p.to_string(),
+        None => "./".to_string(),
+    };
+
+    let output = Output::new();
+
+    Search::start(output, query, path, &leo.options);
 }

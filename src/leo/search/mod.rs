@@ -1,41 +1,70 @@
-mod simple_search;
-mod parallel_search;
-
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
 use std::path::Path;
 use std::ffi::OsStr;
-use std::str;
 
+use sys_info::*;
+
+use memmap::{Mmap, Protection};
+
+use walkdir::{DirEntry, WalkDir, WalkDirIterator};
+
+use leo::{Leo, Matches, Filters};
+use leo::filter::{DirFilter, BufFilter};
 use leo::output::Output;
-use leo::filter::Filter;
 
-pub use self::simple_search::SimpleSearch;
-pub use self::parallel_search::ParallelSearch;
+use matcha::Match;
+use matcha::tbm::TBMMatcher;
+use matcha::simple::SimpleMatcher;
 
-fn li<T>((n, x): (usize, T)) -> (usize, T) {
-    (n + 1, x)
-}
+use regex::Regex;
 
-fn process_entry<F: Filter>(e: &F, p: &Path, q: &String, o: &Box<Output + Send>) {
-    if e.passes_filters() {
-        let mut f = File::open(p).unwrap();;
-        let len = f.metadata().unwrap().len();
-        let mut buffer = String::with_capacity(len as usize);
+pub struct Search {}
 
-        f.read_to_string(&mut buffer);
-        // We dont want to loop through the file if there is nothing to find
-        if buffer.contains(q) {
-            for (line_n, line) in buffer.lines().enumerate().map(li) {
-                if line.contains(q) {
-                    o.result(p, line_n, line);
-                }
-            }
-        }
+fn matches(q: &String, buf: &[u8], len: usize) -> Vec<Match> {
+    match len >= 1000 {
+        true => TBMMatcher::matches(q.as_bytes(), buf),
+        false => SimpleMatcher::matches(q.as_bytes(), buf),
     }
 }
 
-pub trait Search {
-    fn find(&self, output: Box<Output + Send>, query: String, path: String);
+impl Search {
+    pub fn start(out: Output, q: String, p: String, options: &Filters) {
+        let walk = WalkDir::new(&p).into_iter();
+        let mem = mem_info().unwrap();
+        for entry in walk.filter_entry(|e| !e.is_hidden()) {
+            match entry {
+                Ok(entry) => {
+                    if entry.passes_filters() {
+                        let path = entry.path();
+                        let meta = path.metadata().unwrap();
+                        let len = meta.len() as usize;
+
+                        if len == 0 {
+                            continue; // Dont waste io if not
+                        }
+
+                        let mmap = Mmap::open_path(path, Protection::Read).unwrap();
+                        let buffer = unsafe { mmap.as_slice() };
+
+                        if !buffer.is_binary() {
+                            let matches = matches(&q, &buffer, len);
+
+                            if matches.len() > 0 {
+                                let mut res = Matches {
+                                    path: entry.path().to_path_buf(),
+                                    results: matches,
+                                    buffer: buffer,
+                                };
+
+                                out.print(res);
+                            }
+                        }
+                    }
+                }
+                _ => print!("Error with entry"),
+            }
+        }
+    }
 }
